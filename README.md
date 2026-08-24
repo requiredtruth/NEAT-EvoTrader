@@ -7,7 +7,7 @@ CPU-first topology evolution for deterministic research over local CSV OHLC data
 ## Verify it in one command
 
 ```console
-$ ./doit.sh
+$ ./install.sh
 ...
 Ran 5 tests
 OK
@@ -73,3 +73,11 @@ Public donation addresses and the self-service confirmed-transaction request pro
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+
+Run the installed application or command-line entry point with:
+
+```sh
+chmod +x run.sh
+./run.sh --help
+```
