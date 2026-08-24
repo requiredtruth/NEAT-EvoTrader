@@ -1,0 +1,14 @@
+{
+  "seed": 7,
+  "population": 24,
+  "generations": 10,
+  "max_long_positions": 3,
+  "max_short_positions": 3,
+  "initial_cash": 10000.0,
+  "fee_rate": 0.0005,
+  "slippage_rate": 0.0002,
+  "size_ladder": [0.01, 0.02, 0.05, 0.1],
+  "compatibility_threshold": 3.0,
+  "elitism": 2
+}
+
