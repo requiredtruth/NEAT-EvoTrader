@@ -30,6 +30,17 @@ The command runs the complete test suite and a seeded two-generation synthetic-d
 - separately saved global-best genome and JSON summary
 - NumPy array simulation; Numba is an optional installed accelerator target for later compiled hot paths
 
+## Run the GUI
+
+```sh
+chmod +x install.sh run.sh cli.sh
+./run.sh
+```
+
+`run.sh` auto-installs missing dependencies and opens a PySide6 control panel with live status, progress, output/errors, safe synthetic demo, configurable generations/population/seed, start, and stop actions. It has no live-trading connection. Headless demo: `./run.sh --demo`.
+
+CLI-only use is preserved through `./cli.sh DATA/sample_ohlc.csv --generations 20 --population 48 --seed 7`.
+
 ## Run a research job
 
 ```bash
