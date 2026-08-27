@@ -20,6 +20,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int)
     parser.add_argument("--resume")
     parser.add_argument("--run-dir")
+    parser.add_argument("--best-dir", default="BEST", help="directory for the global-best genome and summary")
     args = parser.parse_args()
     config = json.loads(Path(args.config).read_text())
     for key in ("generations", "population", "seed"):
@@ -28,7 +29,14 @@ def main() -> int:
         raise SystemExit("current engine requires equal long and short slot counts")
     data = load_ohlc(args.csv); features = build_features(data)
     run_dir = Path(args.run_dir or f"RUNS/{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}")
-    outcome = train(features, data[:, 3], config, run_dir, load(args.resume) if args.resume else None)
+    outcome = train(
+        features,
+        data[:, 3],
+        config,
+        run_dir,
+        load(args.resume) if args.resume else None,
+        Path(args.best_dir),
+    )
     last = outcome["history"][-1]
     print(f"generation={last['generation']} best_fitness={last['best_fitness']:.6f} equity={last['final_equity']:.2f} trades={last['trades']}")
     print(f"checkpoint={outcome['checkpoint']}")
@@ -36,4 +44,3 @@ def main() -> int:
 
 
 if __name__ == "__main__": raise SystemExit(main())
-

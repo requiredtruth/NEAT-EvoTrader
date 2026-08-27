@@ -37,7 +37,7 @@ chmod +x install.sh run.sh cli.sh
 ./run.sh
 ```
 
-`run.sh` auto-installs missing dependencies and opens a PySide6 control panel with live status, progress, output/errors, safe synthetic demo, configurable generations/population/seed, start, and stop actions. It has no live-trading connection. Headless demo: `./run.sh --demo`.
+`run.sh` auto-installs missing dependencies and opens a PySide6 control panel with live status, progress, output/errors, safe synthetic demo, configurable generations/population/seed, start, and stop actions. It has no live-trading connection. Headless demo: `./run.sh --demo`. Demo checkpoints and best-genome files are isolated in temporary storage and removed afterward; they never overwrite `RUNS/` or `BEST/` research state.
 
 CLI-only use is preserved through `./cli.sh DATA/sample_ohlc.csv --generations 20 --population 48 --seed 7`.
 

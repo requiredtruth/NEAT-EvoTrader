@@ -14,7 +14,7 @@ need_python() { command -v python3 >/dev/null 2>&1 || die "python3 is required";
 make_venv() { need_python; if [ ! -x "$PY" ]; then say "creating isolated environment"; python3 -m venv "$VENV" || die "python3-venv is missing; install it with your OS package manager"; fi; }
 install_deps() { make_venv; say "installing/repairing pinned dependencies"; "$PY" -m pip install --disable-pip-version-check --upgrade 'pip==25.2' 'setuptools==80.9.0' 'wheel==0.45.1'; "$PIP" install --disable-pip-version-check -r "$ROOT/requirements.txt"; }
 verify() { "$PY" -c 'import numpy, matplotlib, PySide6; import numba; print("dependencies: OK")'; (cd "$ROOT" && "$PY" -m compileall -q main.py LIB tests && "$PY" -m unittest discover -s tests -v); }
-demo() { mkdir -p "$MPLCONFIGDIR"; (cd "$ROOT" && "$PY" main.py --generations 2 --population 8 --seed 7 --run-dir "${TMPDIR:-/tmp}/neat-evotrader-demo"); }
+demo() { mkdir -p "$MPLCONFIGDIR"; (demo_dir=$(mktemp -d "${TMPDIR:-/tmp}/neat-evotrader-demo.XXXXXX"); trap 'rm -rf "$demo_dir"' EXIT; cd "$ROOT" && "$PY" main.py --generations 2 --population 8 --seed 7 --run-dir "$demo_dir/RUN" --best-dir "$demo_dir/BEST"); }
 doctor() { need_python; [ -x "$PY" ] || die "environment missing; run ./install.sh install"; verify; say "doctor: PASS"; }
 backup() { out=${2:-"$ROOT/neat-evotrader-backup-$(date +%Y%m%dT%H%M%S).tar.gz"}; tar -czf "$out" -C "$ROOT" CONFIG DATA RUNS BEST; say "backup=$out"; }
 restore() { archive=${2:-}; [ -n "$archive" ] && [ -f "$archive" ] || die "usage: ./install.sh restore BACKUP.tar.gz"; tar -tzf "$archive" | awk '/(^|\/)\.\.($|\/)|^\// {bad=1} END {exit bad}' || die "unsafe backup paths"; tar -xzf "$archive" -C "$ROOT"; say "restore complete"; }

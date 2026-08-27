@@ -11,7 +11,14 @@ from .MUTATION import mutate
 from .SIMULATOR import run
 
 
-def train(features, prices, config: dict, run_dir: Path, resume: dict | None = None) -> dict:
+def train(
+    features,
+    prices,
+    config: dict,
+    run_dir: Path,
+    resume: dict | None = None,
+    best_dir: Path = Path("BEST"),
+) -> dict:
     rng = random.Random(config["seed"])
     inputs, outputs = features.shape[1] + 8, 8
     if resume:
@@ -40,7 +47,6 @@ def train(features, prices, config: dict, run_dir: Path, resume: dict | None = N
             mutate(child, rng, tracker, regime); children.append(child)
         state = {"generation": generation, "population": children, "tracker": tracker, "rng_state": rng.getstate(), "history": history, "config": config}
         checkpoint = save_generation(run_dir, state)
-        save_best(Path("BEST"), best, {**history[-1], "checkpoint": str(checkpoint)})
+        save_best(best_dir, best, {**history[-1], "checkpoint": str(checkpoint)})
         population = children
     return {"best": best, "history": history, "checkpoint": str(checkpoint)}
-
