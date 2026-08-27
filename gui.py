@@ -6,13 +6,21 @@ ROOT = Path(__file__).resolve().parent
 
 
 def demo_command(run_dir: str) -> list[str]:
-    return [sys.executable, str(ROOT / "main.py"), str(ROOT / "DATA/sample_ohlc.csv"), "--generations", "2", "--population", "8", "--seed", "7", "--run-dir", run_dir]
+    root = Path(run_dir)
+    return [sys.executable, str(ROOT / "main.py"), str(ROOT / "DATA/sample_ohlc.csv"), "--generations", "2", "--population", "8", "--seed", "7", "--run-dir", str(root / "RUN"), "--best-dir", str(root / "BEST")]
 
 
 def run_demo() -> dict:
     with tempfile.TemporaryDirectory(prefix="neat-demo-") as tmp:
         proc = subprocess.run(demo_command(tmp), cwd=ROOT, text=True, capture_output=True, check=False)
-        return {"status": "PASS" if proc.returncode == 0 else "FAIL", "returncode": proc.returncode, "mode": "synthetic paper simulation", "output": proc.stdout, "errors": proc.stderr}
+        return {
+            "status": "PASS" if proc.returncode == 0 else "FAIL",
+            "returncode": proc.returncode,
+            "mode": "synthetic paper simulation",
+            "output": proc.stdout.replace(tmp, "<temporary-demo>"),
+            "errors": proc.stderr.replace(tmp, "<temporary-demo>"),
+            "artifacts_removed": True,
+        }
 
 
 def launch() -> int:
@@ -21,7 +29,7 @@ def launch() -> int:
     class Window(QMainWindow):
         def __init__(self):
             super().__init__(); self.setWindowTitle("NEAT-EvoTrader Research Control Panel"); self.resize(940, 650)
-            self.process = QProcess(self); root=QWidget(); layout=QVBoxLayout(root)
+            self.process = QProcess(self); self.demo_temp = None; root=QWidget(); layout=QVBoxLayout(root)
             layout.addWidget(QLabel("Offline historical/synthetic research only — no live trading connection exists."))
             form=QFormLayout(); self.generations=QSpinBox(); self.generations.setRange(1,10000); self.generations.setValue(20)
             self.population=QSpinBox(); self.population.setRange(4,10000); self.population.setValue(48)
@@ -33,16 +41,21 @@ def launch() -> int:
             self.output=QPlainTextEdit(); self.output.setReadOnly(True); layout.addWidget(self.output); self.setCentralWidget(root)
             self.demo.clicked.connect(self.run_safe_demo); self.start.clicked.connect(self.run_job); self.stop.clicked.connect(self.process.kill)
             self.process.readyReadStandardOutput.connect(self.read_output); self.process.readyReadStandardError.connect(self.read_error); self.process.finished.connect(self.finished)
-        def begin(self,args):
+        def begin(self,args,temporary=None):
             if self.process.state()!=QProcess.NotRunning:return
+            self.demo_temp = temporary
             self.output.clear(); self.status.setText("Running"); self.progress.setRange(0,0); self.process.setWorkingDirectory(str(ROOT)); self.process.start(sys.executable,args)
         def run_safe_demo(self):
-            target=str(ROOT/"RUNS"/"gui-demo"); self.begin([str(ROOT/"main.py"),str(ROOT/"DATA/sample_ohlc.csv"),"--generations","2","--population","8","--seed","7","--run-dir",target])
+            temporary = tempfile.TemporaryDirectory(prefix="neat-gui-demo-")
+            self.begin(demo_command(temporary.name)[1:], temporary)
         def run_job(self):
             self.begin([str(ROOT/"main.py"),str(ROOT/"DATA/sample_ohlc.csv"),"--generations",str(self.generations.value()),"--population",str(self.population.value()),"--seed",str(self.seed.value())])
         def read_output(self): self.output.appendPlainText(bytes(self.process.readAllStandardOutput()).decode(errors="replace").rstrip())
         def read_error(self): self.output.appendPlainText(bytes(self.process.readAllStandardError()).decode(errors="replace").rstrip())
-        def finished(self,code,_): self.progress.setRange(0,100); self.progress.setValue(100 if code==0 else 0); self.status.setText("Complete" if code==0 else f"Failed ({code})")
+        def finished(self,code,_):
+            self.progress.setRange(0,100); self.progress.setValue(100 if code==0 else 0); self.status.setText("Complete" if code==0 else f"Failed ({code})")
+            if self.demo_temp is not None:
+                self.demo_temp.cleanup(); self.demo_temp = None
     app=QApplication([]); window=Window(); window.show(); return app.exec()
 
 

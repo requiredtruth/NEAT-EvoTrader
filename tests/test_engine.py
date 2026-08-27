@@ -12,6 +12,7 @@ from LIB.GENOME import Genome, InnovationTracker
 from LIB.MUTATION import mutate
 from LIB.POPULATION import train
 from LIB.SIMULATOR import decode, run
+from gui import run_demo
 
 
 ROOT = Path(__file__).parents[1]
@@ -54,12 +55,28 @@ class EngineTests(unittest.TestCase):
         config = json.loads((ROOT / "CONFIG/DEFAULTS.json").read_text())
         config.update(population=6, generations=1, seed=3)
         with tempfile.TemporaryDirectory() as tmp:
-            first = train(features, data[:, 3], config, Path(tmp) / "one")
+            best_dir = Path(tmp) / "best"
+            first = train(features, data[:, 3], config, Path(tmp) / "one", best_dir=best_dir)
             state = load(first["checkpoint"])
             self.assertEqual(state["generation"], 1)
             config["generations"] = 2
-            second = train(features, data[:, 3], config, Path(tmp) / "two", state)
+            second = train(features, data[:, 3], config, Path(tmp) / "two", state, best_dir)
             self.assertEqual(second["history"][-1]["generation"], 2)
+
+    def test_safe_demo_does_not_modify_durable_best(self):
+        def snapshot():
+            return {
+                str(path.relative_to(ROOT / "BEST")): path.read_bytes()
+                for path in (ROOT / "BEST").rglob("*")
+                if path.is_file()
+            }
+
+        before = snapshot()
+        result = run_demo()
+        self.assertEqual(result["status"], "PASS")
+        self.assertTrue(result["artifacts_removed"])
+        self.assertIn("<temporary-demo>", result["output"])
+        self.assertEqual(snapshot(), before)
 
 
 if __name__ == "__main__": unittest.main()
